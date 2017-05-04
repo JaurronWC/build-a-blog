@@ -8,7 +8,7 @@ from google.appengine.ext import db
 template_dir = os.path.join(os.path.dirname(__file__), "templates")
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir), autoescape = True)
 
-class Post(db.Model):
+class Posts(db.Model):
 	title = db.StringProperty(required = True)
 	post = db.TextProperty(required = True)
 	created = db.DateTimeProperty(auto_now_add = True)
@@ -27,7 +27,8 @@ class Handler(webapp2.RequestHandler):
 		
 class Index(Handler):
 
-	blog_posts = db.GqlQuery("SELECT * FROM Movie WHERE ")
+	blog_posts = db.GqlQuery("SELECT * FROM Posts "
+							"ORDER BY created DESC ")
 	
 	def get(self):
 		t = jinja_env.get_template("front.html")
