@@ -47,6 +47,11 @@
 			font-size: 20px;
 		}
 		
+		.post-title {
+			font-weight: bold;
+			font-size: 20px;
+		}
+		
 		.post-body {
 			margin: 0;
 			font-size: 17px;
@@ -55,6 +60,10 @@
 	
 	<body>
 		<h1>Build a Blog</h1>
+			<ul>
+				<li><a href="/blog">Blog</a></li>
+				<li><a href="/newpost">Submit New Post</a></li>
+			</ul>
 		{% block content %}
 		{% endblock %}
 	</body>

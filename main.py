@@ -25,23 +25,12 @@ class Handler(webapp2.RequestHandler):
 		self.write(self.render_str(template, **kw))
 		
 		
-class Index(Handler):
-
-	blog_posts = db.GqlQuery("SELECT * FROM Posts "
+class MainPage(Handler):
+	def render_front(self, title="", post="", error=""):
+		posts = db.GqlQuery("SELECT * FROM Posts "
 							"ORDER BY created DESC ")
 	
-	def get(self):
-		t = jinja_env.get_template("front.html")
-        content = t.render()
-        self.response.write(content)
-
-			
-class Blog(Handler):
-	def render_blog(self, title="", post="", error=""):
-		posts = db.GqlQuery("SELECT * FROM Post "
-							"ORDER BY created DESC ")
-	
-		self.render("front.html", title=title, post=post, error=error, posts=posts)
+		self.render("base.html", title=title, post=post, error=error, posts=posts)
 
 	def get(self):
 		self.render_front()
@@ -51,40 +40,67 @@ class Blog(Handler):
 		post = self.request.get("post")
 		
 		if title and post:
-			a = Post(title = title, post = post)
-			a.put()
+			p = Posts(title = title, post = post)
+			p.put()
 			
 			self.redirect("/")
 		else:
-			error = "we need both a title and a blog post!"
+			error = "we need both a title and a post!!"
 			self.render_front(title, post, error = error)
-
-class NewPosts(Handler): 
-	def render_newposts(self, title="", post="", error=""):
-		posts = db.GqlQuery("SELECT * FROM Post "
+			
+class NewPost(Handler):
+	def render_post(self, title="", post="", error=""):
+		posts = db.GqlQuery("SELECT * FROM Posts "
 							"ORDER BY created DESC ")
-							
-		self.render("newposts.html", title=title, post=post, error=error, posts=posts)
 	
+		self.render("newposts.html", title=title, post=post, error=error, posts=posts)
+
 	def get(self):
-		self.render_newposts()
+		self.render_post()
 		
 	def post(self):
 		title = self.request.get("title")
 		post = self.request.get("post")
 		
 		if title and post:
-			a = Post(title = title, post = post)
-			a.put()
+			p = Posts(title = title, post = post)
+			p.put()
 			
-			self.redirect("/blog")
+			id = p.key().id()
+			self.redirect("/blog/%s" % id) 
 		else:
-			error = "You need to put in both a title and some content"
-			self.render_front(title, post, error = error)
+			error = "we need both a title and a post!!"
+			self.render_post(title, post, error = error)
+			
+class Blog(Handler):
+	def render_blog(self, title="", post="", error=""):
+		posts = db.GqlQuery("SELECT * FROM Posts "
+							"ORDER BY created DESC "
+							"LIMIT 5")
+	
+		self.render("blog.html", title=title, post=post, error=error, posts=posts)
 
- 
+	def get(self):
+		self.render_blog()
+		
+class ViewPostHandler(webapp2.RequestHandler):
+
+	def get(self, id):
+		post = Posts.get_by_id(int(id))
+		
+		if post:
+			t = jinja_env.get_template("front.html")
+			response = t.render(post=post)
+			self.response.out.write(response)
+		else:
+			error = "That's an invalid ID!"
+			self.response.write(error)
+		
+
+	
 app = webapp2.WSGIApplication([
-	('/', Index),
+	('/', MainPage),
+	('/newpost', NewPost),
 	('/blog', Blog),
-	('/newpost', NewPosts)
+	webapp2.Route('/blog/<id:\d+>', ViewPostHandler)
 ], debug=True)
